@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include "ChunkCreator.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -31,8 +32,8 @@ int main(int argc, char* argv[])
     }
 
     boost::asio::io_context io_context;
-    std::shared_ptr<ChunckCreator> pChuncker(std::make_shared<ChunckCreator>());
-    Client cl(io_context, pChuncker);
+    std::shared_ptr<ChunkCreator> pChuncker(std::make_shared<ChunkCreator>());
+    Client<Chunk> cl(io_context, pChuncker);
     
     if(!cl.connect())
     {
@@ -40,8 +41,22 @@ int main(int argc, char* argv[])
     }
     // std::string data{"some client data ..."};
     // auto result = boost::asio::write(socket, boost::asio::buffer(data));
-    cl.sendSaveCommand();
-    // std::cout << "data sent: " << data.length() << '/' << result << std::endl;
+    if(std::strcmp(argv[1],"save") == 0)
+    {
+        try 
+        {
+            int chunkCount = std::stoi(argv[3], nullptr);
+            cl.sendSaveCommand(chunkCount, argv[4]);
+        } 
+        catch (std::invalid_argument const &ex) 
+        {
+            std::cout << "Invalid number: " << argv[3] << '\n';
+        } 
+        catch (std::out_of_range const &ex) 
+        {
+            std::cout << "Number out of range: " << argv[3] << '\n';
+        }
+    }
 
     cl.disconnect();
 

@@ -8,5 +8,5 @@ class ISPlitter
 {
 public:
 
-    virtual std::vector<T> split(const uint32_t chuncksCount, const std::string& fileName) = 0;
+    virtual bool split(const uint32_t chuncksCount, const std::string& fileName, std::vector<T>& chunks) = 0;
 };

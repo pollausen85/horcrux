@@ -1,16 +1,18 @@
 #pragma once
 #include "ISplitter.hpp"
 
-struct Chunck
+struct Chunk
 {
     uint32_t payloadSize;
     std::string payload;
 };
 
-class ChunckCreator : public ISPlitter<Chunck>
+class ChunkCreator : public ISPlitter<Chunk>
 {
 public:
-    ChunckCreator() = default;
+    ChunkCreator() = default;
 
-    std::vector<Chunck> split(const uint32_t chuncksCount, const std::string& fileName);
+    bool split(const uint32_t chunksCount, 
+               const std::string& fileName, 
+               std::vector<Chunk>& chunks) override;
 };
