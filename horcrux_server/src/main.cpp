@@ -3,11 +3,7 @@
 #include <string>
 
 #include <boost/asio.hpp>
-#include <boost/program_options.hpp>
-
 #include "server.hpp"
-
-namespace po = boost::program_options;
 
 int main(int argc, char* argv[])
 {

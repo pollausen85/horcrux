@@ -6,7 +6,7 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
-struct SaveCommand
+struct CommandData
 {
     std::string commandName;
     boost::uuids::uuid uuid;
@@ -16,7 +16,7 @@ struct SaveCommand
     uint32_t payloadSize;
 };
 
-void SaveCommandToJson(json& j, const SaveCommand& sc)
+void SaveCommandToJson(json& j, const CommandData& sc)
 {
     j = json
     {

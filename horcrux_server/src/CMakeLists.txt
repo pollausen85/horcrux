@@ -6,7 +6,7 @@ set(target horcrux_server)
 #include_directories(asio INTERFACE ${boost_asio_SOURCE_DIR}/include)
 
 # Add source to this project's executable.
-add_executable (${target} ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
+add_executable (${target} main.cpp)
 target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_features(${target} PUBLIC cxx_std_20)
 

@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_ESTENSION OFF)
 set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
 
-set(BOOST_INCLUDE_LIBRARIES asio thread regex system date_time)
+set(BOOST_INCLUDE_LIBRARIES asio thread regex system uuid date_time)
 set(BOOST_ENABLE_CMAKE ON)
 
 include(FetchContent)
