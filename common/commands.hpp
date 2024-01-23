@@ -3,6 +3,7 @@
 #include <boost/uuid/uuid.hpp>            // uuid class
 #include <boost/uuid/uuid_generators.hpp> // generators
 #include <boost/uuid/uuid_io.hpp>         // streaming operators etc.
+#include <boost/lexical_cast.hpp>
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
@@ -27,5 +28,17 @@ void SaveCommandToJson(json& j, const CommandData& sc)
         {"payload", sc.payload},
         {"payload_size", sc.payloadSize}
     };
+}
+
+void JsonFromSaveCommand(const json& j, CommandData& sc)
+{
+    j.at("command").get_to(sc.commandName);
+    std::string uuid;
+    j.at("id").get_to(uuid);
+    sc.uuid = boost::lexical_cast<boost::uuids::uuid>(uuid);
+    j.at("index").get_to(sc.index);
+    j.at("total_count").get_to(sc.totalCount);
+    j.at("payload").get_to(sc.payload);
+    j.at("payload_size").get_to(sc.payloadSize);
 }
 

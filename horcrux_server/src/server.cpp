@@ -1,4 +1,5 @@
 #include "server.hpp"
+#include "commands.hpp"
 
 void server::do_accept() 
 {
@@ -41,4 +42,15 @@ void session::wait_for_request()
             std::cout << "error: " << ec << std::endl;;
         }
     });
+}
+
+void session::manage_command(const std::string& data)
+{
+    auto j = json::parse(data);
+    CommandData sc;
+    JsonFromSaveCommand(j, sc);
+    if(sc.commandName == "save" || sc.commandName == "load")
+    {
+        boost::asio::write(m_socket, boost::asio::buffer("Command received"));
+    }
 }

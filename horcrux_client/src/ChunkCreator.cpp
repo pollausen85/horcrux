@@ -19,7 +19,8 @@ bool ChunkCreator::split(const uint32_t chunksCount, const std::string& fileName
     {
         std::vector<uint8_t> chunk(chunkSize);
         binFile.seekg(i*chunkSize);
-        if (!binFile.read(reinterpret_cast<char*>(&chunk[0]), chunkSize)) 
+        binFile.read(reinterpret_cast<char*>(&chunk[0]), chunkSize);
+        if (binFile.bad())
         {
             binFile.close();
             return false;

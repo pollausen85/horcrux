@@ -21,6 +21,8 @@ private:
 
     void wait_for_request();
 
+    void manage_command(const std::string& data);
+
     tcp::socket m_socket;
     boost::asio::streambuf m_buffer;
 };

@@ -4,7 +4,7 @@ set(target horcrux_client)
 
 # Add source to this project's executable.
 add_executable (${target} main.cpp client.cpp ChunkCreator.cpp)
-target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${nlohmann_json_SOURCE_DIR}/include ${BASE64PP_INCLUDE_DIR})
+target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/common ${nlohmann_json_SOURCE_DIR}/include ${BASE64PP_INCLUDE_DIR})
 target_compile_features(${target} PUBLIC cxx_std_20)
 
 target_link_libraries(${target} 
