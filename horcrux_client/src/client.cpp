@@ -11,6 +11,7 @@ Client<T>::Client(boost::asio::io_context& io_context, std::shared_ptr<ISPlitter
     :m_socket(io_context)
     ,m_resolver(io_context)
     ,m_chuncker(chunker)
+    ,m_responseReceived(false)
 {
 }
 
@@ -37,7 +38,7 @@ void Client<T>::disconnect()
 }
 
 template<class T>
-bool Client<T>::sendSaveCommand(const uint32_t chunkCount, const std::string& fileName)
+bool Client<T>::sendSaveCommand(const uint32_t chunkCount, const std::string& fileName, std::string& strUUID)
 {
     std::vector<Chunk> chunks; 
     bool res = m_chuncker->split(chunkCount, fileName, chunks);
@@ -67,12 +68,87 @@ bool Client<T>::sendSaveCommand(const uint32_t chunkCount, const std::string& fi
             boost::asio::write(m_socket, boost::asio::buffer(jsonStr.data() + pos, chunkSize));
             pos += chunkSize;
         }
+
+        waitForResponseSave();
     }
 
+    strUUID = boost::uuids::to_string(sc.uuid);
+
     return true;
+}
+
+template<class T>
+bool Client<T>::sendLoadCommand(const std::string& strUUID, const std::string& filename)
+{
+    LoadCommand lc;
+    lc.commandName = "load";
+    lc.uuid = boost::lexical_cast<boost::uuids::uuid>(strUUID);
+
+    json j;
+
+    LoadCommandToJson(j, lc);
+
+    boost::asio::write(m_socket, boost::asio::buffer(j.dump() + '\n'));
+
+    waitForResponseLoad();
+
+    return true;
+}
+
+template<class T>
+void Client<T>::waitForResponseSave()
+{
+    boost::system::error_code error;
+    // Async read to handle the server's response
+    boost::asio::read_until(m_socket, m_buffer, '\n', error);
+    if (!error) 
+    {
+        std::string data
+        {
+            std::istreambuf_iterator<char>(&m_buffer), 
+            std::istreambuf_iterator<char>() 
+        };
+
+        std::cout << "Received: " << data << std::endl;
+    }
+    else 
+    {
+        std::cerr << "Error reading data: " << error.message() << std::endl;
+    }
+}
+
+template<class T>
+void Client<T>::waitForResponseLoad()
+{
+    CommandData cd;
+    boost::system::error_code error;
+    // Async read to handle the server's response
+    boost::asio::read_until(m_socket, m_buffer, '\n', error);
+    if (!error) 
+    {
+        std::string data
+        {
+            std::istreambuf_iterator<char>(&m_buffer), 
+            std::istreambuf_iterator<char>() 
+        };
+
+        std::cout << "Received: " << data << std::endl;
+
+        JsonFromCommandData(data, cd);
+    }
+    else 
+    {
+        std::cerr << "Error reading data: " << error.message() << std::endl;
+    }
+
+    if((cd.index + 1) < cd.totalCount)
+    {
+        waitForResponseLoad();
+    }
 }
 
 template Client<Chunk>::Client(boost::asio::io_context& io_context, std::shared_ptr<ISPlitter<Chunk>> const chunker);
 template bool Client<Chunk>::connect(const std::string& serverAddress, const std::string& serverPort);
 template void Client<Chunk>::disconnect();
-template bool Client<Chunk>::sendSaveCommand(const uint32_t chunkCount, const std::string& fileName);
+template bool Client<Chunk>::sendSaveCommand(const uint32_t chunkCount, const std::string& fileName, std::string& strUUID);
+template bool Client<Chunk>::sendLoadCommand(const std::string& strUUID, const std::string& filename);

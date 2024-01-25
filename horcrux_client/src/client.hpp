@@ -7,7 +7,7 @@
 using boost::asio::ip::tcp;
 
 template<class T>
-class Client
+class Client : public std::enable_shared_from_this<Client<T>>
 {
 public:
 
@@ -27,12 +27,21 @@ public:
 
     /// @brief create and send save command to server
     /// @param chunckCount number of chunck in which the file will be splitted
-    /// @param fileName    file to split
+    /// @param fileName    file to splitù
+    /// @param strUUID     unique id generated
     /// @return 
-    bool sendSaveCommand(const uint32_t chunkCount, const std::string& fileName);
+    bool sendSaveCommand(const uint32_t chunkCount, const std::string& fileName, std::string& strUUID);
+
+    bool sendLoadCommand(const std::string& strUUID, const std::string& filename);
 
 private:
     tcp::socket m_socket;
     tcp::resolver m_resolver;
     std::shared_ptr<ISPlitter<T>> m_chuncker;
+    boost::asio::streambuf m_buffer;
+    bool m_responseReceived;
+
+    void waitForResponseSave();
+
+    void waitForResponseLoad();
 };

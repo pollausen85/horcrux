@@ -25,6 +25,17 @@ bool DiskStorer::save(const boost::uuids::uuid& uuid, const std::string& data, c
     }
 }
 
+bool DiskStorer::load(const boost::uuids::uuid& uuid, std::vector<std::string>& data)
+{
+    if(m_diskMap.find(uuid) != m_diskMap.end())
+    {
+        data = m_diskMap[uuid];
+        return true;
+    }
+
+    return false;
+}
+
 std::string DiskStorer::createFilename(const boost::uuids::uuid& uuid, const uint32_t index)
 {
     std::string strUUID = boost::uuids::to_string(uuid);

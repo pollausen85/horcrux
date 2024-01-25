@@ -22,6 +22,8 @@ public:
 
     bool save(const boost::uuids::uuid& uuid, const std::string& data, const uint32_t index = 0);
 
+    bool load(const boost::uuids::uuid& uuid, std::vector<std::string>& data);
+
 private:
 
     DiskMap m_diskMap;

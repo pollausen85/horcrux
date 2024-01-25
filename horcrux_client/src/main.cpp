@@ -33,9 +33,9 @@ int main(int argc, char* argv[])
 
     boost::asio::io_context io_context;
     std::shared_ptr<ChunkCreator> pChuncker(std::make_shared<ChunkCreator>());
-    Client<Chunk> cl(io_context, pChuncker);
+    auto cl = std::make_shared<Client<Chunk>>(io_context, pChuncker);
     
-    if(!cl.connect())
+    if(!cl->connect())
     {
         return -1;
     }
@@ -45,20 +45,26 @@ int main(int argc, char* argv[])
     {
         try 
         {
+            std::string uuid;
             int chunkCount = std::stoi(argv[3], nullptr);
-            cl.sendSaveCommand(chunkCount, argv[4]);
+            cl->sendSaveCommand(chunkCount, argv[4], uuid);
+            std::cout << uuid << '\n';
         } 
         catch (std::invalid_argument const &ex) 
         {
-            std::cout << "Invalid number: " << argv[3] << '\n';
+            std::cerr << "Invalid number: " << argv[3] << '\n';
         } 
         catch (std::out_of_range const &ex) 
         {
-            std::cout << "Number out of range: " << argv[3] << '\n';
+            std::cerr << "Number out of range: " << argv[3] << '\n';
         }
     }
+    else if (std::strcmp(argv[1],"load") == 0)
+    {
+        cl->sendLoadCommand(argv[2],argv[3]);  
+    }
 
-    cl.disconnect();
+    cl->disconnect();
 
     return 0;
 }

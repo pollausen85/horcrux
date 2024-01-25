@@ -16,8 +16,7 @@ public:
 
     session(tcp::socket socket, std::shared_ptr<IStorer> const storer)  
         : m_socket(std::move(socket))
-        , m_storer(storer)
-    { }
+        , m_storer(storer) { }
 
     void run() 
     {
@@ -32,25 +31,29 @@ private:
 
     void wait_for_complete_message(const std::string& data);
 
+    bool execute_load(boost::uuids::uuid uuid);
+
     tcp::socket m_socket;
     boost::asio::streambuf m_buffer;
     std::string m_strBuf;
+    std::string m_jsonBuf;
     std::shared_ptr<IStorer> m_storer;
+    std::vector<char> m_fileContent;
 };
 
 
 class server
 {
 public:
-    server(boost::asio::io_context& io_context, short port, const std::string& directory) 
+    server(boost::asio::io_context& io_context, short port, const std::string& directory, std::shared_ptr<IStorer> const storer) 
     : m_acceptor(io_context, tcp::endpoint(tcp::v4(), port)) 
     {
-        do_accept(directory);
+        do_accept(directory, storer);
     }
 
 private:
 
-    void do_accept(const std::string& directory);
+    void do_accept(const std::string& directory, std::shared_ptr<IStorer> const storer);
     
     tcp::acceptor m_acceptor;
 };
