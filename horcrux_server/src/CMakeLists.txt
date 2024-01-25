@@ -6,7 +6,7 @@ set(target horcrux_server)
 #include_directories(asio INTERFACE ${boost_asio_SOURCE_DIR}/include)
 
 # Add source to this project's executable.
-add_executable (${target} main.cpp server.cpp)
+add_executable (${target} main.cpp server.cpp DiskStorer.cpp)
 target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/common ${nlohmann_json_SOURCE_DIR}/include ${BASE64PP_INCLUDE_DIR})
 target_compile_features(${target} PUBLIC cxx_std_20)
 

@@ -1,9 +1,9 @@
 #include "server.hpp"
 #include "commands.hpp"
 
-void server::do_accept() 
+void server::do_accept(const std::string& directory) 
 {
-    m_acceptor.async_accept([this](boost::system::error_code ec, tcp::socket socket) 
+    m_acceptor.async_accept([this, &directory](boost::system::error_code ec, tcp::socket socket) 
     {
         if (!ec) 
         {
@@ -11,13 +11,14 @@ void server::do_accept()
                 << socket.remote_endpoint().address().to_string() 
                 << ":" << socket.remote_endpoint().port() << '\n';
 
-            std::make_shared<session>(std::move(socket))->run();
+            
+            std::make_shared<session>(std::move(socket), std::make_shared<DiskStorer>(directory))->run();
         } 
         else 
         {
             std::cout << "error: " << ec.message() << std::endl;
         }
-        do_accept();
+        do_accept(directory);
     });
 }
 
@@ -74,8 +75,9 @@ void session::manage_command(const std::string& data)
         CommandData sc;
         JsonFromSaveCommand(j, sc);
 
-        if (sc.commandName == "save" || sc.commandName == "load")
+        if (sc.commandName == "save")
         {
+            m_storer->save(sc.uuid, data, sc.index);
             // boost::asio::async_write(m_socket, boost::asio::buffer("Command received"),
             //     [this](boost::system::error_code ec, std::size_t /*length*/)
             //     {
@@ -87,8 +89,13 @@ void session::manage_command(const std::string& data)
             //             std::cout << "error: " << ec << std::endl;
             //         }
             //     });
-            wait_for_request();
         }
+        else if (sc.commandName == "load")
+        {
+
+        }
+
+        wait_for_request();
     } 
     catch (const json::parse_error& e) 
     {
