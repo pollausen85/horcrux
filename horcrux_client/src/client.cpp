@@ -4,6 +4,8 @@
 #include "ChunkCreator.hpp"
 #include <vector>
 
+#define MAX_CHUNK_SIZE 4096
+
 template<class T>
 Client<T>::Client(boost::asio::io_context& io_context, std::shared_ptr<ISPlitter<T>> const chunker)
     :m_socket(io_context)
@@ -56,7 +58,15 @@ bool Client<T>::sendSaveCommand(const uint32_t chunkCount, const std::string& fi
         sc.payloadSize = chunks[i].payloadSize;
 
         SaveCommandToJson(j, sc);
-        boost::asio::write(m_socket, boost::asio::buffer(j.dump()));
+
+        std::string jsonStr = j.dump() + '\n';
+        // Send data in chunks
+        for (size_t pos = 0; pos < jsonStr.size();)
+        {
+            size_t chunkSize = std::min<size_t>(jsonStr.size() - pos, MAX_CHUNK_SIZE);
+            boost::asio::write(m_socket, boost::asio::buffer(jsonStr.data() + pos, chunkSize));
+            pos += chunkSize;
+        }
     }
 
     return true;

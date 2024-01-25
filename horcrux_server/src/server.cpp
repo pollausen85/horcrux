@@ -24,7 +24,7 @@ void server::do_accept()
 void session::wait_for_request() 
 {
     auto self(shared_from_this());
-    boost::asio::async_read_until(m_socket, m_buffer, "\0", 
+    boost::asio::async_read_until(m_socket, m_buffer, '\n', 
     [this, self](boost::system::error_code ec, std::size_t /*length*/)
     {
         if (!ec)  
@@ -34,23 +34,66 @@ void session::wait_for_request()
                 std::istreambuf_iterator<char>(&m_buffer), 
                 std::istreambuf_iterator<char>() 
             };
-            std::cout << data << std::endl;
-            wait_for_request();
+            
+            wait_for_complete_message(data);
         } 
         else 
         {
-            std::cout << "error: " << ec << std::endl;;
+            std::cout << "error: " << ec << std::endl;
         }
     });
 }
 
+void session::wait_for_complete_message(const std::string& data)
+{
+    // Append the received data to the buffer
+    m_strBuf += data;
+
+    // Check if the buffer contains a complete message (ends with a newline character)
+    size_t newlinePos;
+    while ((newlinePos = m_strBuf.find('\n')) != std::string::npos)
+    {
+        // Extract the complete message
+        std::string completeMessage = m_strBuf.substr(0, newlinePos);
+        
+        // Remove the processed message from the buffer
+        m_strBuf = m_strBuf.substr(newlinePos + 1);
+
+        // Process the complete message
+        manage_command(completeMessage);
+    }
+}
+
 void session::manage_command(const std::string& data)
 {
-    auto j = json::parse(data);
-    CommandData sc;
-    JsonFromSaveCommand(j, sc);
-    if(sc.commandName == "save" || sc.commandName == "load")
+    std::cout << "Received data: " << data << std::endl;
+    
+    try 
     {
-        boost::asio::write(m_socket, boost::asio::buffer("Command received"));
+        auto j = json::parse(data);
+        CommandData sc;
+        JsonFromSaveCommand(j, sc);
+
+        if (sc.commandName == "save" || sc.commandName == "load")
+        {
+            // boost::asio::async_write(m_socket, boost::asio::buffer("Command received"),
+            //     [this](boost::system::error_code ec, std::size_t /*length*/)
+            //     {
+            //         if (!ec) {
+            //             std::cout << "Response sent: Command received" << std::endl;
+            //             // Continue waiting for the next request after sending the response
+            //             wait_for_request();
+            //         } else {
+            //             std::cout << "error: " << ec << std::endl;
+            //         }
+            //     });
+            wait_for_request();
+        }
+    } 
+    catch (const json::parse_error& e) 
+    {
+        std::cerr << "JSON parsing error: " << e.what() << std::endl;
+
+        wait_for_request();
     }
 }
