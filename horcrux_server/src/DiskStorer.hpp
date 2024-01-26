@@ -17,6 +17,7 @@ public:
     DiskStorer(const std::string& filePath = R"(./)") 
         : m_filePath(filePath) 
     {
+        m_filePath = fs::canonical(m_filePath);
         addTrailingDelimiter(m_filePath);
     }
 

@@ -4,9 +4,9 @@
 
 #define MAX_CHUNK_SIZE 4096
 
-void server::do_accept(const std::string& directory, std::shared_ptr<IStorer> const storer) 
+void server::do_accept(const std::string& directory) 
 {
-    m_acceptor.async_accept([this, &storer, &directory](boost::system::error_code ec, tcp::socket socket) 
+    m_acceptor.async_accept([this, &directory](boost::system::error_code ec, tcp::socket socket) 
     {
         if (!ec) 
         {
@@ -15,13 +15,13 @@ void server::do_accept(const std::string& directory, std::shared_ptr<IStorer> co
                 << ":" << socket.remote_endpoint().port() << '\n';
 
             
-            std::make_shared<session>(std::move(socket), storer)->run();
+            std::make_shared<session>(std::move(socket), m_storer)->run();
         } 
         else 
         {
             std::cout << "error: " << ec.message() << std::endl;
         }
-        do_accept(directory, storer);
+        do_accept(directory);
     });
 }
 
@@ -135,26 +135,29 @@ bool session::execute_load(boost::uuids::uuid uuid)
     {
         for(size_t i = 0; i < data.size(); ++i)
         {
-            std::ifstream file(data[i], std::ios::binary | std::ios::ate);
-            std::streamsize size = fs::file_size(data[i]);
-            m_fileContent.resize(size + 1);
-            if (file.read(m_fileContent.data(), size))
+            std::ifstream file(data[i], std::ios::binary);
+            if(file.is_open())
             {
-                m_fileContent.back() = '\n';
-                for (size_t pos = 0; pos < m_fileContent.size();)
+                std::streamsize size = fs::file_size(data[i]);
+                m_fileContent.resize(size + 1);
+                if (file.read(m_fileContent.data(), size))
                 {
-                    size_t chunkSize = std::min<size_t>(m_fileContent.size() - pos, MAX_CHUNK_SIZE);
-                    auto self(shared_from_this());
-                    boost::asio::async_write(m_socket, boost::asio::buffer(m_fileContent.data() + pos, chunkSize),
-                    [this, self, pos](boost::system::error_code ec, std::size_t /*length*/)
+                    m_fileContent.back() = '\n';
+                    for (size_t pos = 0; pos < m_fileContent.size();)
                     {
-                        if (!ec) {
-                            std::cout << "Response sent until " << pos << std::endl;
-                        } else {
-                            std::cout << "error: " << ec << std::endl;
-                        }
-                    });
-                    pos += chunkSize;
+                        size_t chunkSize = std::min<size_t>(m_fileContent.size() - pos, MAX_CHUNK_SIZE);
+                        auto self(shared_from_this());
+                        boost::asio::async_write(m_socket, boost::asio::buffer(m_fileContent.data() + pos, chunkSize),
+                        [this, self, pos](boost::system::error_code ec, std::size_t /*length*/)
+                        {
+                            if (!ec) {
+                                std::cout << "Response sent until " << pos << std::endl;
+                            } else {
+                                std::cout << "error: " << ec << std::endl;
+                            }
+                        });
+                        pos += chunkSize;
+                    }
                 }
             }
         }

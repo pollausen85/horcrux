@@ -37,7 +37,7 @@ private:
     boost::asio::streambuf m_buffer;
     std::string m_strBuf;
     std::string m_jsonBuf;
-    std::shared_ptr<IStorer> m_storer;
+    std::shared_ptr<IStorer> const m_storer;
     std::vector<char> m_fileContent;
 };
 
@@ -46,14 +46,16 @@ class server
 {
 public:
     server(boost::asio::io_context& io_context, short port, const std::string& directory, std::shared_ptr<IStorer> const storer) 
-    : m_acceptor(io_context, tcp::endpoint(tcp::v4(), port)) 
+    : m_acceptor(io_context, tcp::endpoint(tcp::v4(), port))
+    , m_storer(storer)
     {
-        do_accept(directory, storer);
+        do_accept(directory);
     }
 
 private:
 
-    void do_accept(const std::string& directory, std::shared_ptr<IStorer> const storer);
+    void do_accept(const std::string& directory);
     
     tcp::acceptor m_acceptor;
+    std::shared_ptr<IStorer> const m_storer;
 };
