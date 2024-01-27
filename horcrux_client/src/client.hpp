@@ -39,9 +39,13 @@ private:
     tcp::resolver m_resolver;
     std::shared_ptr<ISPlitter<T>> m_chuncker;
     boost::asio::streambuf m_buffer;
-    bool m_responseReceived;
+    std::string m_strBuf;
 
     void waitForResponseSave();
 
-    void waitForResponseLoad();
+    void waitForResponseLoad(const std::string& filename);
+
+    void extractCompleteMessage(const std::string& data, const std::string& filename);
+
+    void processData(const std::string& data, const std::string& filename);
 };

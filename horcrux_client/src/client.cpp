@@ -3,6 +3,7 @@
 #include <base64pp/base64pp.h>
 #include "ChunkCreator.hpp"
 #include <vector>
+#include <fstream>
 
 #define MAX_CHUNK_SIZE 4096
 
@@ -11,7 +12,6 @@ Client<T>::Client(boost::asio::io_context& io_context, std::shared_ptr<ISPlitter
     :m_socket(io_context)
     ,m_resolver(io_context)
     ,m_chuncker(chunker)
-    ,m_responseReceived(false)
 {
 }
 
@@ -90,7 +90,7 @@ bool Client<T>::sendLoadCommand(const std::string& strUUID, const std::string& f
 
     boost::asio::write(m_socket, boost::asio::buffer(j.dump() + '\n'));
 
-    waitForResponseLoad();
+    waitForResponseLoad(filename);
 
     return true;
 }
@@ -118,9 +118,55 @@ void Client<T>::waitForResponseSave()
 }
 
 template<class T>
-void Client<T>::waitForResponseLoad()
+void Client<T>::extractCompleteMessage(const std::string& data, const std::string& filename)
+{
+    // Append the received data to the buffer
+    m_strBuf += data;
+
+    // Check if the buffer contains a complete message (ends with a newline character)
+    size_t newlinePos;
+    while ((newlinePos = m_strBuf.find('\n')) != std::string::npos)
+    {
+        // Extract the complete message
+        std::string completeMessage = m_strBuf.substr(0, newlinePos);
+
+        std::cout << "Complete message " << completeMessage << "\n";
+        
+        // Remove the processed message from the buffer
+        std::string remainingData = m_strBuf.substr(newlinePos + 1);
+        m_strBuf = remainingData;
+
+        processData(completeMessage, filename);
+    }
+}
+
+template<class T>
+void Client<T>::processData(const std::string& data, const std::string& filename)
 {
     CommandData cd;
+    json j = json::parse(data);
+    JsonFromCommandData(j, cd);
+    uint32_t index = cd.index;
+    uint32_t total = cd.totalCount;
+
+    std::ofstream file(filename, std::ios::binary | std::ios::app);
+    if(file.is_open() && file.good())
+    {
+        std::vector<uint8_t> binaryData = base64pp::decode(cd.payload).value_or(std::vector<uint8_t>());
+        file.write(reinterpret_cast<char*>(binaryData.data()), binaryData.size());
+        file.close();
+    }
+
+    if((index + 1) < total)
+    {
+        waitForResponseLoad(filename);
+    }
+}
+
+template<class T>
+void Client<T>::waitForResponseLoad(const std::string& filename)
+{
+    uint32_t index, total;
     boost::system::error_code error;
     // Async read to handle the server's response
     boost::asio::read_until(m_socket, m_buffer, '\n', error);
@@ -134,16 +180,11 @@ void Client<T>::waitForResponseLoad()
 
         std::cout << "Received: " << data << std::endl;
 
-        JsonFromCommandData(data, cd);
+        extractCompleteMessage(data, filename);
     }
     else 
     {
         std::cerr << "Error reading data: " << error.message() << std::endl;
-    }
-
-    if((cd.index + 1) < cd.totalCount)
-    {
-        waitForResponseLoad();
     }
 }
 

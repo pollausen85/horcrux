@@ -148,10 +148,10 @@ bool session::execute_load(boost::uuids::uuid uuid)
                         size_t chunkSize = std::min<size_t>(m_fileContent.size() - pos, MAX_CHUNK_SIZE);
                         auto self(shared_from_this());
                         boost::asio::async_write(m_socket, boost::asio::buffer(m_fileContent.data() + pos, chunkSize),
-                        [this, self, pos](boost::system::error_code ec, std::size_t /*length*/)
+                        [this, self, pos, chunkSize](boost::system::error_code ec, std::size_t /*length*/)
                         {
                             if (!ec) {
-                                std::cout << "Response sent until " << pos << std::endl;
+                                std::cout << "Response sent " << std::endl;
                             } else {
                                 std::cout << "error: " << ec << std::endl;
                             }
