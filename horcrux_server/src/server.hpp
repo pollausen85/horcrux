@@ -7,6 +7,8 @@
 #include <memory>
 #include "DiskStorer.hpp"
 
+class SaveCommand;
+
 using boost::asio::ip::tcp;
 
 class session : public std::enable_shared_from_this<session>
@@ -20,16 +22,18 @@ public:
 
     void run() 
     {
-        wait_for_request();
+        waitForRequest();
     }
 
     void processData(const std::string& data, const std::string& /*filename*/);
 
 private:
 
-    void wait_for_request();
+    void waitForRequest();
 
-    bool execute_load(boost::uuids::uuid uuid);
+    void executeLoad(const boost::uuids::uuid& uuid);
+
+    void executeSave(const SaveCommand& sc);
 
     tcp::socket m_socket;
     boost::asio::streambuf m_buffer;
@@ -47,12 +51,12 @@ public:
     : m_acceptor(io_context, tcp::endpoint(tcp::v4(), port))
     , m_storer(storer)
     {
-        do_accept(directory);
+        doAccept(directory);
     }
 
 private:
 
-    void do_accept(const std::string& directory);
+    void doAccept(const std::string& directory);
     
     tcp::acceptor m_acceptor;
     std::shared_ptr<IStorer> const m_storer;

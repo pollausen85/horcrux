@@ -27,13 +27,20 @@ public:
 
     /// @brief create and send save command to server
     /// @param chunckCount number of chunck in which the file will be splitted
-    /// @param fileName    file to splitù
+    /// @param fileName    file to split
     /// @param strUUID     unique id generated
     /// @return 
     bool sendSaveCommand(const uint32_t chunkCount, const std::string& fileName, std::string& strUUID);
 
+    /// @brief create and send load command to server
+    /// @param strUUID   unique id to recover
+    /// @param filename  path where save the file
+    /// @return 
     bool sendLoadCommand(const std::string& strUUID, const std::string& filename);
 
+    /// @brief Process the data received by the client
+    /// @param data      data to be processed 
+    /// @param filename  path where save the file
     void processData(const std::string& data, const std::string& filename);
 
 private:
@@ -43,9 +50,10 @@ private:
     boost::asio::streambuf m_buffer;
     std::string m_strBuf;
 
+    /// @brief Wait the server response of the save request
     void waitForResponseSave();
 
+    /// @brief Wait the server response of the load request
+    /// @param filename  path where save the file
     void waitForResponseLoad(const std::string& filename);
-
-    //void extractCompleteMessage(const std::string& data, const std::string& filename);
 };

@@ -21,9 +21,11 @@ public:
         addTrailingDelimiter(m_filePath);
     }
 
-    bool save(const boost::uuids::uuid& uuid, const std::string& data, const uint32_t index = 0);
+    bool save(const boost::uuids::uuid& uuid, 
+              const std::string& data, 
+              const uint32_t index = 0) override;
 
-    bool load(const boost::uuids::uuid& uuid, std::vector<std::string>& data);
+    bool load(const boost::uuids::uuid& uuid, std::vector<std::string>& data) override;
 
 private:
 

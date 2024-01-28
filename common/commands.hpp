@@ -77,6 +77,24 @@ void to_json(json& j, const LoadResponse& lr)
     };
 }
 
+void to_json(json& j, const LoadCommand& lc)
+{
+    j = json
+    {
+        {"command", lc.commandName},
+        {"id", boost::uuids::to_string(lc.uuid)},
+    };
+}
+
+void to_json(json& j, const StatusData& sd)
+{
+    j = json
+    {
+        {"command", sd.commandName},
+        {"code", sd.code}
+    };
+}
+
 void from_json(const json& j, CommandData& sc)
 {
     std::string uuid;
@@ -94,29 +112,10 @@ void from_json(const json& j, SaveCommand& sc)
     j.at("data").get_to(sc.data);
 }
 
-void to_json(json& j, const StatusData& sd)
-{
-    j = json
-    {
-        {"command", sd.commandName},
-        {"code", sd.code}
-    };
-}
-
 void from_json(const json& j, StatusData& sd)
 {
     j.at("command").get_to(sd.commandName);
     j.at("code").get_to(sd.code);
-}
-
-
-void to_json(json& j, const LoadCommand& lc)
-{
-    j = json
-    {
-        {"command", lc.commandName},
-        {"id", boost::uuids::to_string(lc.uuid)},
-    };
 }
 
 void from_json(const json& j, LoadCommand& lc)
@@ -125,4 +124,10 @@ void from_json(const json& j, LoadCommand& lc)
     std::string uuid;
     j.at("id").get_to(uuid);
     lc.uuid = boost::lexical_cast<boost::uuids::uuid>(uuid);
+}
+
+void from_json(const json& j, LoadResponse& lr)
+{
+    j.at("code").get_to(lr.code);
+    j.at("data").get_to(lr.data);
 }

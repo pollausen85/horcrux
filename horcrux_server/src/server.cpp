@@ -1,11 +1,11 @@
 #include "server.hpp"
-#include "commands.hpp"
 #include <fstream>
 #include "Utils.hpp"
+#include "commands.hpp"
 
 #define MAX_CHUNK_SIZE 4096
 
-void server::do_accept(const std::string& directory) 
+void server::doAccept(const std::string& directory) 
 {
     m_acceptor.async_accept([this, &directory](boost::system::error_code ec, tcp::socket socket) 
     {
@@ -22,11 +22,11 @@ void server::do_accept(const std::string& directory)
         {
             std::cout << "error: " << ec.message() << std::endl;
         }
-        do_accept(directory);
+        doAccept(directory);
     });
 }
 
-void session::wait_for_request() 
+void session::waitForRequest() 
 {
     auto self(shared_from_this());
     boost::asio::async_read_until(m_socket, m_buffer, '\n', 
@@ -64,49 +64,24 @@ void session::processData(const std::string& data, const std::string& /*filename
         if (commandName == "save")
         {
             auto sc = j.get<SaveCommand>();
-
-            StatusData sd;
-            sd.commandName = sc.commandName;
-            sd.code = (int)ErrCode::NoError;
-            if(!m_storer->save(sc.data.uuid, json(sc.data).dump(), sc.data.index))
-            {
-                sd.code = (int)ErrCode::ErrSavingFile;
-            }
-
-            const json resp = sd;  
-
-            m_jsonBuf = resp.dump() + '\n';
-
-            auto self(shared_from_this());
-            boost::asio::async_write(m_socket, boost::asio::buffer(m_jsonBuf),
-            [this, self](boost::system::error_code ec, std::size_t /*length*/)
-            {
-                if (!ec) {
-                    std::cout << "Response sent" << std::endl;
-                } else {
-                    std::cout << "error: " << ec << std::endl;
-                }
-            });
+            executeSave(sc);
         }
         else if (commandName == "load")
         {  
             auto lc = j.get<LoadCommand>();
-            if(!execute_load(lc.uuid))
-            {
-
-            }
+            executeLoad(lc.uuid);
         }
 
-        wait_for_request();
+        waitForRequest();
     } 
     catch (const json::parse_error& e) 
     {
         std::cerr << "JSON parsing error: " << e.what() << std::endl;
-        wait_for_request();
+        waitForRequest();
     }
 }
 
-bool session::execute_load(boost::uuids::uuid uuid)
+void session::executeLoad(const boost::uuids::uuid& uuid)
 {
     std::vector<std::string> data;
     if(m_storer->load(uuid, data))
@@ -140,6 +115,35 @@ bool session::execute_load(boost::uuids::uuid uuid)
             }
         }
     }
+}
 
-    return true;
+void session::executeSave(const SaveCommand &sc)
+{
+    StatusData sd;
+    sd.commandName = sc.commandName;
+    sd.code = (int)ErrCode::NoError;
+
+    LoadResponse lr;
+    lr.code = 0;
+    lr.data = sc.data;
+
+    if(!m_storer->save(sc.data.uuid, json(lr).dump(), sc.data.index))
+    {
+        sd.code = (int)ErrCode::ErrSavingFile;
+    }
+
+    const json resp = sd;  
+
+    m_jsonBuf = resp.dump() + '\n';
+
+    auto self(shared_from_this());
+    boost::asio::async_write(m_socket, boost::asio::buffer(m_jsonBuf),
+    [this, self](boost::system::error_code ec, std::size_t /*length*/)
+    {
+        if (!ec) {
+            std::cout << "Response sent" << std::endl;
+        } else {
+            std::cout << "error: " << ec << std::endl;
+        }
+    });
 }
