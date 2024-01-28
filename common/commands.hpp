@@ -62,7 +62,7 @@ void LoadCommandToJson(json& j, const CommandData& lc)
     };
 }
 
-void JsonFromCommandData(const json& j, CommandData& sc)
+void CommandDataFromJson(const json& j, CommandData& sc)
 {
     j.at("command").get_to(sc.commandName);
     std::string uuid;
@@ -83,7 +83,7 @@ void StatusDataToJson(json& j, const StatusData& sd)
     };
 }
 
-void JsonFromStatusData(const json& j, StatusData& sd)
+void StatusDataFromJson(const json& j, StatusData& sd)
 {
     j.at("command").get_to(sd.commandName);
     j.at("code").get_to(sd.code);
@@ -99,7 +99,7 @@ void LoadCommandToJson(json& j, const LoadCommand& lc)
     };
 }
 
-void JsonFromLoadCommand(const json& j, LoadCommand& lc)
+void LoadCommandFromJson(const json& j, LoadCommand& lc)
 {
     j.at("command").get_to(lc.commandName);
     std::string uuid;

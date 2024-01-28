@@ -4,6 +4,7 @@
 #include "ChunkCreator.hpp"
 #include <vector>
 #include <fstream>
+#include "Utils.hpp"
 
 #define MAX_CHUNK_SIZE 4096
 
@@ -118,34 +119,11 @@ void Client<T>::waitForResponseSave()
 }
 
 template<class T>
-void Client<T>::extractCompleteMessage(const std::string& data, const std::string& filename)
-{
-    // Append the received data to the buffer
-    m_strBuf += data;
-
-    // Check if the buffer contains a complete message (ends with a newline character)
-    size_t newlinePos;
-    while ((newlinePos = m_strBuf.find('\n')) != std::string::npos)
-    {
-        // Extract the complete message
-        std::string completeMessage = m_strBuf.substr(0, newlinePos);
-
-        std::cout << "Complete message " << completeMessage << "\n";
-        
-        // Remove the processed message from the buffer
-        std::string remainingData = m_strBuf.substr(newlinePos + 1);
-        m_strBuf = remainingData;
-
-        processData(completeMessage, filename);
-    }
-}
-
-template<class T>
 void Client<T>::processData(const std::string& data, const std::string& filename)
 {
     CommandData cd;
     json j = json::parse(data);
-    JsonFromCommandData(j, cd);
+    CommandDataFromJson(j, cd);
     uint32_t index = cd.index;
     uint32_t total = cd.totalCount;
 
@@ -180,7 +158,9 @@ void Client<T>::waitForResponseLoad(const std::string& filename)
 
         std::cout << "Received: " << data << std::endl;
 
-        extractCompleteMessage(data, filename);
+        Utils::waitForCompleteMessage<Client<T>>(data, 
+                                                 std::shared_ptr<Client<T>>(this->shared_from_this()),
+                                                 m_strBuf, filename);
     }
     else 
     {
@@ -193,3 +173,4 @@ template bool Client<Chunk>::connect(const std::string& serverAddress, const std
 template void Client<Chunk>::disconnect();
 template bool Client<Chunk>::sendSaveCommand(const uint32_t chunkCount, const std::string& fileName, std::string& strUUID);
 template bool Client<Chunk>::sendLoadCommand(const std::string& strUUID, const std::string& filename);
+template void Client<Chunk>::processData(const std::string& data, const std::string& filename);

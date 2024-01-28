@@ -1,6 +1,7 @@
 #include "server.hpp"
 #include "commands.hpp"
 #include <fstream>
+#include "Utils.hpp"
 
 #define MAX_CHUNK_SIZE 4096
 
@@ -39,7 +40,9 @@ void session::wait_for_request()
                 std::istreambuf_iterator<char>() 
             };
             
-            wait_for_complete_message(data);
+            Utils::waitForCompleteMessage<session>(data, 
+                                                   std::shared_ptr<session>(this->shared_from_this()), 
+                                                   m_strBuf);
         } 
         else 
         {
@@ -48,29 +51,7 @@ void session::wait_for_request()
     });
 }
 
-void session::wait_for_complete_message(const std::string& data)
-{
-    // Append the received data to the buffer
-    m_strBuf += data;
-
-    // Check if the buffer contains a complete message (ends with a newline character)
-    size_t newlinePos;
-    while ((newlinePos = m_strBuf.find('\n')) != std::string::npos)
-    {
-        // Extract the complete message
-        std::string completeMessage = m_strBuf.substr(0, newlinePos);
-        
-        // Remove the processed message from the buffer
-        std::string remainingData = m_strBuf.substr(newlinePos + 1);
-        m_strBuf = remainingData;
-
-        // Process the complete message
-        manage_command(completeMessage);
-    }
-}
-
-
-void session::manage_command(const std::string& data)
+void session::processData(const std::string& data, const std::string& /*filename*/)
 {
     std::cout << "Received data: " << data << std::endl;
     
@@ -83,7 +64,7 @@ void session::manage_command(const std::string& data)
         if (commandName == "save")
         {
             CommandData sc;
-            JsonFromCommandData(j, sc);
+            CommandDataFromJson(j, sc);
 
             StatusData sd;
             sd.commandName = sc.commandName;
@@ -112,7 +93,7 @@ void session::manage_command(const std::string& data)
         else if (commandName == "load")
         {  
             LoadCommand lc;
-            JsonFromLoadCommand(j, lc);
+            LoadCommandFromJson(j, lc);
             if(!execute_load(lc.uuid))
             {
 

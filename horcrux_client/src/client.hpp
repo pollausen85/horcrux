@@ -34,6 +34,8 @@ public:
 
     bool sendLoadCommand(const std::string& strUUID, const std::string& filename);
 
+    void processData(const std::string& data, const std::string& filename);
+
 private:
     tcp::socket m_socket;
     tcp::resolver m_resolver;
@@ -45,7 +47,5 @@ private:
 
     void waitForResponseLoad(const std::string& filename);
 
-    void extractCompleteMessage(const std::string& data, const std::string& filename);
-
-    void processData(const std::string& data, const std::string& filename);
+    //void extractCompleteMessage(const std::string& data, const std::string& filename);
 };

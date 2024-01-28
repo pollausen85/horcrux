@@ -23,13 +23,11 @@ public:
         wait_for_request();
     }
 
+    void processData(const std::string& data, const std::string& /*filename*/);
+
 private:
 
     void wait_for_request();
-
-    void manage_command(const std::string& data);
-
-    void wait_for_complete_message(const std::string& data);
 
     bool execute_load(boost::uuids::uuid uuid);
 
