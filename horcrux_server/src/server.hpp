@@ -53,12 +53,20 @@ private:
     /// @param size size of the data
     void write(char* const data, size_t size);
 
+    /// @brief Modify and write to the socket using async_write the m_jsonBuf
+    /// @param data data to write in the buffer
+    void modifyAndWriteJsonBuffer(const std::string& data);
+
+    void modifyAndWriteFileContent(std::ifstream& file, const std::streamsize& size);
+
     tcp::socket m_socket;
     boost::asio::streambuf m_buffer;
+    std::mutex m_jsonMutex;
     std::string m_strBuf;
     std::string m_jsonBuf;
     std::shared_ptr<IStorer> const m_storer;
     std::vector<char> m_fileContent;
+    std::mutex m_fileContentMutex;
 };
 
 

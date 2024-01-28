@@ -123,15 +123,22 @@ void Client<T>::processData(const std::string& data, const std::string& filename
     {
         json j = json::parse(data);
         auto lr = j.get<LoadResponse>();
-        index = lr.data.index;
-        total = lr.data.totalCount;
-
-        std::ofstream file(filename, std::ios::binary | std::ios::app);
-        if(file.is_open() && file.good())
+        if(lr.code == (int)ErrCode::NoError)
         {
-            std::vector<uint8_t> binaryData = base64pp::decode(lr.data.payload).value_or(std::vector<uint8_t>());
-            file.write(reinterpret_cast<char*>(binaryData.data()), binaryData.size());
-            file.close();
+            index = lr.data.index;
+            total = lr.data.totalCount;
+
+            std::ofstream file(filename, std::ios::binary | std::ios::app);
+            if(file.is_open() && file.good())
+            {
+                std::vector<uint8_t> binaryData = base64pp::decode(lr.data.payload).value_or(std::vector<uint8_t>());
+                file.write(reinterpret_cast<char*>(binaryData.data()), binaryData.size());
+                file.close();
+            }
+        }
+        else
+        {
+            std::cerr << "Error " << lr.code << ": " << Utils::errorCodeToStr(lr.code) << std::endl;    
         }
     }
     catch (const json::parse_error& e) 

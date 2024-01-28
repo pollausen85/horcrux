@@ -92,27 +92,23 @@ void session::executeLoad(const boost::uuids::uuid& uuid)
             if(file.is_open())
             {
                 std::streamsize size = fs::file_size(data[i]);
-                for (size_t pos = 0; pos < size;)
-                {
-                    size_t chunkSize = std::min<size_t>(size - pos, MAX_CHUNK_SIZE);
-                    if((pos +chunkSize) == size)
-                    {
-                        m_fileContent.resize(chunkSize+1);
-                        m_fileContent.back() = '\n';
-                    }
-                    else
-                    {
-                        m_fileContent.resize(chunkSize);
-                    }
-                    if (file.read(m_fileContent.data(), chunkSize))
-                    {
-                        write(m_fileContent.data(), m_fileContent.size());
-                        pos += chunkSize;
-                        file.seekg(pos);
-                    }
-                }
+                modifyAndWriteFileContent(file, size);
+            }
+            else
+            {
+                LoadResponse lr;
+                lr.code = (int)ErrCode::ErrOpeningFile;
+                json j = lr;
+                modifyAndWriteJsonBuffer(j.dump());
             }
         }
+    }
+    else
+    {
+        LoadResponse lr;
+        lr.code = (int)ErrCode::ErrFileNotFound;
+        json j = lr;
+        modifyAndWriteJsonBuffer(j.dump());
     }
 }
 
@@ -133,9 +129,7 @@ void session::executeSave(const SaveCommand &sc)
 
     const json resp = sd;  
 
-    m_jsonBuf = resp.dump() + '\n';
-
-    write(m_jsonBuf.data(), m_jsonBuf.size());
+    modifyAndWriteJsonBuffer(resp.dump());
 }
 
 void session::write(char* const data, size_t size)
@@ -150,4 +144,43 @@ void session::write(char* const data, size_t size)
             std::cout << "error: " << ec << std::endl;
         }
     });
+}
+
+void session::modifyAndWriteJsonBuffer(const std::string& data)
+{
+    std::lock_guard<std::mutex> lock(m_jsonMutex);
+    m_jsonBuf = data + '\n';
+
+    write(m_jsonBuf.data(), m_jsonBuf.size());
+}
+
+void session::modifyAndWriteFileContent(std::ifstream& file, const std::streamsize& size)
+{
+    std::lock_guard<std::mutex> lock(m_fileContentMutex);
+    for (size_t pos = 0; pos < size;)
+    {
+        size_t chunkSize = std::min<size_t>(size - pos, MAX_CHUNK_SIZE);
+        if((pos +chunkSize) == size)
+        {
+            m_fileContent.resize(chunkSize+1);
+            m_fileContent.back() = '\n';
+        }
+        else
+        {
+            m_fileContent.resize(chunkSize);
+        }
+        if (file.read(m_fileContent.data(), chunkSize))
+        {
+            write(m_fileContent.data(), m_fileContent.size());
+            pos += chunkSize;
+            file.seekg(pos);
+        }
+        else
+        {
+            LoadResponse lr;
+            lr.code = (int)ErrCode::ErrReadingFile;
+            json j = lr;
+            modifyAndWriteJsonBuffer(j.dump());
+        }
+    }
 }

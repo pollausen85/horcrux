@@ -2,7 +2,6 @@
 #include <string>
 #include <memory>
 #include <type_traits>
-#include "commands.hpp"
 
 class Utils
 {
@@ -30,6 +29,8 @@ public:
                                            std::shared_ptr<T> const ptr,
                                            std::string& buffer, 
                                            const std::string& fileName = "");
+
+    static std::string errorCodeToStr(int errCode);
 
 private:
 
