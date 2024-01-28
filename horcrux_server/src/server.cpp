@@ -2,8 +2,7 @@
 #include <fstream>
 #include "Utils.hpp"
 #include "commands.hpp"
-
-#define MAX_CHUNK_SIZE 4096
+#include "Defs.hpp"
 
 void server::doAccept(const std::string& directory) 
 {
@@ -145,7 +144,7 @@ void session::executeSave(const SaveCommand &sc)
     m_jsonBuf = resp.dump() + '\n';
 
     auto self(shared_from_this());
-    boost::asio::async_write(m_socket, boost::asio::buffer(m_jsonBuf),
+    boost::asio::async_write(m_socket, boost::asio::buffer(m_jsonBuf.data(), m_jsonBuf.size()),
     [this, self](boost::system::error_code ec, std::size_t /*length*/)
     {
         if (!ec) {

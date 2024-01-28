@@ -33,7 +33,7 @@ public:
     bool sendSaveCommand(const uint32_t chunkCount, const std::string& fileName, std::string& strUUID);
 
     /// @brief create and send load command to server
-    /// @param strUUID   unique id to recover
+    /// @param strUUID   unique id of file to recover
     /// @param filename  path where save the file
     /// @return 
     bool sendLoadCommand(const std::string& strUUID, const std::string& filename);

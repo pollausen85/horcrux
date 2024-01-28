@@ -7,13 +7,6 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
-enum class ErrCode
-{
-    ErrFileNotFound = -2,
-    ErrSavingFile = -1,
-    NoError = 0
-};
-
 struct CommandData
 {
     boost::uuids::uuid uuid;

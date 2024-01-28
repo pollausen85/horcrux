@@ -20,6 +20,7 @@ public:
         : m_socket(std::move(socket))
         , m_storer(storer) { }
 
+    /// @brief Start a new session
     void run() 
     {
         waitForRequestOrResponse();
@@ -34,10 +35,16 @@ private:
     /// @param filename  path where save the file
     void processData(const std::string& data, const std::string& /*filename*/);
 
+    /// @brief Wait new data
+    /// @param filename not used in this function
     void waitForRequestOrResponse(const std::string& filename = "");
 
+    /// @brief Execute the load command
+    /// @param uuid unique id of file to recover
     void executeLoad(const boost::uuids::uuid& uuid);
 
+    /// @brief Execute the save command
+    /// @param sc information needed to execute the save command
     void executeSave(const SaveCommand& sc);
 
     tcp::socket m_socket;
@@ -61,6 +68,8 @@ public:
 
 private:
 
+    /// @brief Accept a new connection from a client
+    /// @param directory directory where save the .hrx file
     void doAccept(const std::string& directory);
     
     tcp::acceptor m_acceptor;

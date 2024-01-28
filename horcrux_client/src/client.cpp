@@ -5,8 +5,7 @@
 #include <vector>
 #include <fstream>
 #include "Utils.hpp"
-
-#define MAX_CHUNK_SIZE 4096
+#include "Defs.hpp"
 
 template<class T>
 Client<T>::Client(boost::asio::io_context& io_context, std::shared_ptr<ISPlitter<T>> const chunker)
@@ -119,23 +118,25 @@ void Client<T>::waitForResponseSave()
 template<class T>
 void Client<T>::processData(const std::string& data, const std::string& filename)
 {
-    json j = json::parse(data);
-    auto lr = j.get<LoadResponse>();
-    uint32_t index = lr.data.index;
-    uint32_t total = lr.data.totalCount;
-
-    std::ofstream file(filename, std::ios::binary | std::ios::app);
-    if(file.is_open() && file.good())
+    try
     {
-        std::vector<uint8_t> binaryData = base64pp::decode(lr.data.payload).value_or(std::vector<uint8_t>());
-        file.write(reinterpret_cast<char*>(binaryData.data()), binaryData.size());
-        file.close();
-    }
+        json j = json::parse(data);
+        auto lr = j.get<LoadResponse>();
+        uint32_t index = lr.data.index;
+        uint32_t total = lr.data.totalCount;
 
-    // if((index + 1) < total)
-    // {
-    //     waitForResponseLoad(filename);
-    // }
+        std::ofstream file(filename, std::ios::binary | std::ios::app);
+        if(file.is_open() && file.good())
+        {
+            std::vector<uint8_t> binaryData = base64pp::decode(lr.data.payload).value_or(std::vector<uint8_t>());
+            file.write(reinterpret_cast<char*>(binaryData.data()), binaryData.size());
+            file.close();
+        }
+    }
+    catch (const json::parse_error& e) 
+    {
+        std::cerr << "JSON parsing error: " << e.what() << std::endl;
+    }
 }
 
 template<class T>

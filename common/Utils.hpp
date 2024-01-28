@@ -6,6 +6,12 @@
 class Utils
 {
 public:
+
+    /// @brief Wait for a complete message in order to process it 
+    /// @param data     new data just read
+    /// @param ptr      pointer to a class that will process data
+    /// @param buffer   buffer where checking the presence of a complete message
+    /// @param fileName path where save the file
     template<class T, typename std::enable_if<std::is_member_function_pointer<decltype(&T::processData)>::value, int>::type = 0, 
              typename std::enable_if<std::is_member_function_pointer<decltype(&T::waitForRequestOrResponse)>::value, int>::type = 0>
     static void waitForCompleteMessage(const std::string& data,
