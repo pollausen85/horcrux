@@ -63,19 +63,17 @@ void session::processData(const std::string& data, const std::string& /*filename
 
         if (commandName == "save")
         {
-            CommandData sc;
-            CommandDataFromJson(j, sc);
+            auto sc = j.get<SaveCommand>();
 
             StatusData sd;
             sd.commandName = sc.commandName;
             sd.code = (int)ErrCode::NoError;
-            if(!m_storer->save(sc.uuid, data, sc.index))
+            if(!m_storer->save(sc.data.uuid, json(sc.data).dump(), sc.data.index))
             {
                 sd.code = (int)ErrCode::ErrSavingFile;
             }
 
-            json resp;
-            StatusDataToJson(resp, sd);
+            const json resp = sd;  
 
             m_jsonBuf = resp.dump() + '\n';
 
@@ -92,8 +90,7 @@ void session::processData(const std::string& data, const std::string& /*filename
         }
         else if (commandName == "load")
         {  
-            LoadCommand lc;
-            LoadCommandFromJson(j, lc);
+            auto lc = j.get<LoadCommand>();
             if(!execute_load(lc.uuid))
             {
 

@@ -48,18 +48,18 @@ bool Client<T>::sendSaveCommand(const uint32_t chunkCount, const std::string& fi
         return false;
     }
     
-    CommandData sc;
+    SaveCommand sc;
     sc.commandName = "save";
-    sc.uuid = boost::uuids::random_generator()();
-    sc.totalCount = chunkCount;
+    sc.data.uuid = boost::uuids::random_generator()();
+    sc.data.totalCount = chunkCount;
     json j;
     for(size_t i = 0; i < chunks.size(); ++i)
     {
-        sc.index = i;
-        sc.payload = chunks[i].payload;
-        sc.payloadSize = chunks[i].payloadSize;
+        sc.data.index = i;
+        sc.data.payload = chunks[i].payload;
+        sc.data.payloadSize = chunks[i].payloadSize;
 
-        SaveCommandToJson(j, sc);
+        j = json(sc);
 
         std::string jsonStr = j.dump() + '\n';
         // Send data in chunks
@@ -73,7 +73,7 @@ bool Client<T>::sendSaveCommand(const uint32_t chunkCount, const std::string& fi
         waitForResponseSave();
     }
 
-    strUUID = boost::uuids::to_string(sc.uuid);
+    strUUID = boost::uuids::to_string(sc.data.uuid);
 
     return true;
 }
@@ -85,9 +85,7 @@ bool Client<T>::sendLoadCommand(const std::string& strUUID, const std::string& f
     lc.commandName = "load";
     lc.uuid = boost::lexical_cast<boost::uuids::uuid>(strUUID);
 
-    json j;
-
-    LoadCommandToJson(j, lc);
+    const json j = lc;
 
     boost::asio::write(m_socket, boost::asio::buffer(j.dump() + '\n'));
 
@@ -121,9 +119,8 @@ void Client<T>::waitForResponseSave()
 template<class T>
 void Client<T>::processData(const std::string& data, const std::string& filename)
 {
-    CommandData cd;
     json j = json::parse(data);
-    CommandDataFromJson(j, cd);
+    auto cd = j.get<CommandData>();
     uint32_t index = cd.index;
     uint32_t total = cd.totalCount;
 
