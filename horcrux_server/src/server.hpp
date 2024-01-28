@@ -33,7 +33,8 @@ private:
     /// @brief Process the data received by the client
     /// @param data      data to be processed 
     /// @param filename  path where save the file
-    void processData(const std::string& data, const std::string& /*filename*/);
+    void processData(const std::string& data, const std::string& /*filename*/, 
+                     uint32_t& /*index*/, uint32_t& /*total*/);
 
     /// @brief Wait new data
     /// @param filename not used in this function
@@ -46,6 +47,11 @@ private:
     /// @brief Execute the save command
     /// @param sc information needed to execute the save command
     void executeSave(const SaveCommand& sc);
+
+    /// @brief Write to the socket using async_write
+    /// @param data data to write in the buffer
+    /// @param size size of the data
+    void write(char* const data, size_t size);
 
     tcp::socket m_socket;
     boost::asio::streambuf m_buffer;

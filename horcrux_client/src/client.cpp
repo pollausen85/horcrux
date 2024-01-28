@@ -116,14 +116,15 @@ void Client<T>::waitForResponseSave()
 }
 
 template<class T>
-void Client<T>::processData(const std::string& data, const std::string& filename)
+void Client<T>::processData(const std::string& data, const std::string& filename, 
+                            uint32_t& index, uint32_t& total)
 {
     try
     {
         json j = json::parse(data);
         auto lr = j.get<LoadResponse>();
-        uint32_t index = lr.data.index;
-        uint32_t total = lr.data.totalCount;
+        index = lr.data.index;
+        total = lr.data.totalCount;
 
         std::ofstream file(filename, std::ios::binary | std::ios::app);
         if(file.is_open() && file.good())
@@ -156,9 +157,9 @@ void Client<T>::waitForRequestOrResponse(const std::string& filename)
 
         std::cout << "Received: " << data << std::endl;
 
-        Utils::waitForCompleteMessage<Client<T>>(data, 
-                                                 std::shared_ptr<Client<T>>(this->shared_from_this()),
-                                                 m_strBuf, filename);
+        Utils::waitForCompleteLoadMessage<Client<T>>(data, 
+                                                     std::shared_ptr<Client<T>>(this->shared_from_this()),
+                                                     m_strBuf, filename);
     }
     else 
     {
@@ -171,4 +172,3 @@ template bool Client<Chunk>::connect(const std::string& serverAddress, const std
 template void Client<Chunk>::disconnect();
 template bool Client<Chunk>::sendSaveCommand(const uint32_t chunkCount, const std::string& fileName, std::string& strUUID);
 template bool Client<Chunk>::sendLoadCommand(const std::string& strUUID, const std::string& filename);
-template void Client<Chunk>::processData(const std::string& data, const std::string& filename);

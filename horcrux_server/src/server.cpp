@@ -50,7 +50,8 @@ void session::waitForRequestOrResponse(const std::string& /*filename*/)
     });
 }
 
-void session::processData(const std::string& data, const std::string& /*filename*/)
+void session::processData(const std::string& data, const std::string& /*filename*/,
+                          uint32_t& /*index*/, uint32_t& /*total*/)
 {
     std::cout << "Received data: " << data << std::endl;
     
@@ -105,16 +106,7 @@ void session::executeLoad(const boost::uuids::uuid& uuid)
                     }
                     if (file.read(m_fileContent.data(), chunkSize))
                     {
-                        auto self(shared_from_this());
-                        boost::asio::async_write(m_socket, boost::asio::buffer(m_fileContent.data(), m_fileContent.size()),
-                        [this, self, pos, chunkSize](boost::system::error_code ec, std::size_t /*length*/)
-                        {
-                            if (!ec) {
-                                std::cout << "Response sent " << std::endl;
-                            } else {
-                                std::cout << "error: " << ec << std::endl;
-                            }
-                        });
+                        write(m_fileContent.data(), m_fileContent.size());
                         pos += chunkSize;
                         file.seekg(pos);
                     }
@@ -143,8 +135,13 @@ void session::executeSave(const SaveCommand &sc)
 
     m_jsonBuf = resp.dump() + '\n';
 
+    write(m_jsonBuf.data(), m_jsonBuf.size());
+}
+
+void session::write(char* const data, size_t size)
+{
     auto self(shared_from_this());
-    boost::asio::async_write(m_socket, boost::asio::buffer(m_jsonBuf.data(), m_jsonBuf.size()),
+    boost::asio::async_write(m_socket, boost::asio::buffer(data, size),
     [this, self](boost::system::error_code ec, std::size_t /*length*/)
     {
         if (!ec) {

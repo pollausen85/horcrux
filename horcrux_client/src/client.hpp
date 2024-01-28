@@ -51,7 +51,7 @@ private:
     /// @brief Process the data received by the client
     /// @param data      data to be processed 
     /// @param filename  path where save the file
-    void processData(const std::string& data, const std::string& filename);
+    void processData(const std::string& data, const std::string& filename, uint32_t& index, uint32_t& total);
 
     /// @brief Wait the server response of the save request
     void waitForResponseSave();
