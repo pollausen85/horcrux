@@ -26,7 +26,7 @@ void server::doAccept(const std::string& directory)
     });
 }
 
-void session::waitForRequest() 
+void session::waitForRequestOrResponse(const std::string& /*filename*/) 
 {
     auto self(shared_from_this());
     boost::asio::async_read_until(m_socket, m_buffer, '\n', 
@@ -72,12 +72,12 @@ void session::processData(const std::string& data, const std::string& /*filename
             executeLoad(lc.uuid);
         }
 
-        waitForRequest();
+        waitForRequestOrResponse();
     } 
     catch (const json::parse_error& e) 
     {
         std::cerr << "JSON parsing error: " << e.what() << std::endl;
-        waitForRequest();
+        waitForRequestOrResponse();
     }
 }
 
@@ -92,15 +92,22 @@ void session::executeLoad(const boost::uuids::uuid& uuid)
             if(file.is_open())
             {
                 std::streamsize size = fs::file_size(data[i]);
-                m_fileContent.resize(size + 1);
-                if (file.read(m_fileContent.data(), size))
+                for (size_t pos = 0; pos < size;)
                 {
-                    m_fileContent.back() = '\n';
-                    for (size_t pos = 0; pos < m_fileContent.size();)
+                    size_t chunkSize = std::min<size_t>(size - pos, MAX_CHUNK_SIZE);
+                    if((pos +chunkSize) == size)
                     {
-                        size_t chunkSize = std::min<size_t>(m_fileContent.size() - pos, MAX_CHUNK_SIZE);
+                        m_fileContent.resize(chunkSize+1);
+                        m_fileContent.back() = '\n';
+                    }
+                    else
+                    {
+                        m_fileContent.resize(chunkSize);
+                    }
+                    if (file.read(m_fileContent.data(), chunkSize))
+                    {
                         auto self(shared_from_this());
-                        boost::asio::async_write(m_socket, boost::asio::buffer(m_fileContent.data() + pos, chunkSize),
+                        boost::asio::async_write(m_socket, boost::asio::buffer(m_fileContent.data(), m_fileContent.size()),
                         [this, self, pos, chunkSize](boost::system::error_code ec, std::size_t /*length*/)
                         {
                             if (!ec) {
@@ -110,6 +117,7 @@ void session::executeLoad(const boost::uuids::uuid& uuid)
                             }
                         });
                         pos += chunkSize;
+                        file.seekg(pos);
                     }
                 }
             }

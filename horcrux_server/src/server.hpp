@@ -22,14 +22,19 @@ public:
 
     void run() 
     {
-        waitForRequest();
+        waitForRequestOrResponse();
     }
-
-    void processData(const std::string& data, const std::string& /*filename*/);
 
 private:
 
-    void waitForRequest();
+    friend class Utils;
+
+    /// @brief Process the data received by the client
+    /// @param data      data to be processed 
+    /// @param filename  path where save the file
+    void processData(const std::string& data, const std::string& /*filename*/);
+
+    void waitForRequestOrResponse(const std::string& filename = "");
 
     void executeLoad(const boost::uuids::uuid& uuid);
 

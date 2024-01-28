@@ -89,7 +89,7 @@ bool Client<T>::sendLoadCommand(const std::string& strUUID, const std::string& f
 
     boost::asio::write(m_socket, boost::asio::buffer(j.dump() + '\n'));
 
-    waitForResponseLoad(filename);
+    waitForRequestOrResponse(filename);
 
     return true;
 }
@@ -132,14 +132,14 @@ void Client<T>::processData(const std::string& data, const std::string& filename
         file.close();
     }
 
-    if((index + 1) < total)
-    {
-        waitForResponseLoad(filename);
-    }
+    // if((index + 1) < total)
+    // {
+    //     waitForResponseLoad(filename);
+    // }
 }
 
 template<class T>
-void Client<T>::waitForResponseLoad(const std::string& filename)
+void Client<T>::waitForRequestOrResponse(const std::string& filename)
 {
     uint32_t index, total;
     boost::system::error_code error;

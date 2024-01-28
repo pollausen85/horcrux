@@ -6,14 +6,16 @@
 class Utils
 {
 public:
-    template<class T, typename std::enable_if<std::is_member_function_pointer<decltype(&T::processData)>::value, int>::type = 0>
+    template<class T, typename std::enable_if<std::is_member_function_pointer<decltype(&T::processData)>::value, int>::type = 0, 
+             typename std::enable_if<std::is_member_function_pointer<decltype(&T::waitForRequestOrResponse)>::value, int>::type = 0>
     static void waitForCompleteMessage(const std::string& data,
                                        std::shared_ptr<T> const ptr,
                                        std::string& buffer, 
                                        const std::string& fileName = "");
 };
 
-template<class T, typename std::enable_if<std::is_member_function_pointer<decltype(&T::processData)>::value, int>::type>
+template<class T, typename std::enable_if<std::is_member_function_pointer<decltype(&T::processData)>::value, int>::type,
+         typename std::enable_if<std::is_member_function_pointer<decltype(&T::waitForRequestOrResponse)>::value, int>::type>
 void Utils::waitForCompleteMessage(const std::string &data, 
                                std::shared_ptr<T> const ptr,
                                std::string& buffer, 
@@ -32,5 +34,10 @@ void Utils::waitForCompleteMessage(const std::string &data,
 
         // Process the complete message
         ptr->processData(completeMessage, fileName);
+    }
+
+    if(!buffer.empty())
+    {
+        ptr->waitForRequestOrResponse(fileName);
     }
 }

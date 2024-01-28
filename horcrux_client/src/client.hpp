@@ -38,22 +38,25 @@ public:
     /// @return 
     bool sendLoadCommand(const std::string& strUUID, const std::string& filename);
 
-    /// @brief Process the data received by the client
-    /// @param data      data to be processed 
-    /// @param filename  path where save the file
-    void processData(const std::string& data, const std::string& filename);
-
 private:
+    
+    friend class Utils;
+
     tcp::socket m_socket;
     tcp::resolver m_resolver;
     std::shared_ptr<ISPlitter<T>> m_chuncker;
     boost::asio::streambuf m_buffer;
     std::string m_strBuf;
 
+    /// @brief Process the data received by the client
+    /// @param data      data to be processed 
+    /// @param filename  path where save the file
+    void processData(const std::string& data, const std::string& filename);
+
     /// @brief Wait the server response of the save request
     void waitForResponseSave();
 
     /// @brief Wait the server response of the load request
     /// @param filename  path where save the file
-    void waitForResponseLoad(const std::string& filename);
+    void waitForRequestOrResponse(const std::string& filename);
 };
