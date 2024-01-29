@@ -159,7 +159,6 @@ void session::write(char* const data, size_t size)
 
 void session::modifyAndWriteJsonBuffer(const std::string& data)
 {
-    std::lock_guard<std::mutex> lock(m_jsonMutex);
     m_jsonBuf = data + '\n';
 
     write(m_jsonBuf.data(), m_jsonBuf.size());
@@ -167,7 +166,6 @@ void session::modifyAndWriteJsonBuffer(const std::string& data)
 
 void session::modifyAndWriteFileContent(std::ifstream& file, const std::streamsize& size)
 {
-    std::lock_guard<std::mutex> lock(m_fileContentMutex);
     for (size_t pos = 0; pos < size;)
     {
         size_t chunkSize = std::min<size_t>(size - pos, MAX_CHUNK_SIZE);

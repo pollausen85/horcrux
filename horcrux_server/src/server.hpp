@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <boost/asio.hpp>
-#include <mutex>
 #include <memory>
 #include "DiskStorer.hpp"
 #include "IChecksum.hpp"
@@ -64,17 +63,18 @@ private:
     /// @param size file size in bytes
     void modifyAndWriteFileContent(std::ifstream& file, const std::streamsize& size);
 
+    /// @brief Check the correctness of the checksum calculated and the checksum received
+    /// @param payload  data which to calculate the checksum on
+    /// @param checksum received checksum
     bool checkCRCcorrectness(const std::string& payload, uint32_t checksum);
 
     tcp::socket m_socket;
     boost::asio::streambuf m_buffer;
-    std::mutex m_jsonMutex;
     std::string m_strBuf;
     std::string m_jsonBuf;
     std::shared_ptr<IStorer> const m_storer;
     std::shared_ptr<IChecksum> const m_checksumCalculator;
     std::vector<char> m_fileContent;
-    std::mutex m_fileContentMutex;
 };
 
 
