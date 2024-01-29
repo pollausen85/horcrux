@@ -14,6 +14,7 @@ struct CommandData
     uint32_t totalCount;
     std::string payload;
     uint32_t payloadSize;
+    uint32_t checksum;
 };
 
 struct SaveCommand
@@ -40,15 +41,16 @@ struct LoadCommand
     boost::uuids::uuid uuid;
 };
 
-void to_json(json& j, const CommandData& sc)
+void to_json(json& j, const CommandData& cd)
 {
     j = json
     {
-        {"id", boost::uuids::to_string(sc.uuid)},
-        {"index",sc.index},
-        {"total_count",sc.totalCount},
-        {"payload", sc.payload},
-        {"payload_size", sc.payloadSize}
+        {"id", boost::uuids::to_string(cd.uuid)},
+        {"index",cd.index},
+        {"total_count",cd.totalCount},
+        {"payload", cd.payload},
+        {"payload_size", cd.payloadSize},
+        {"checksum", cd.checksum}
     };
 }
 
@@ -88,15 +90,16 @@ void to_json(json& j, const StatusData& sd)
     };
 }
 
-void from_json(const json& j, CommandData& sc)
+void from_json(const json& j, CommandData& cd)
 {
     std::string uuid;
     j.at("id").get_to(uuid);
-    sc.uuid = boost::lexical_cast<boost::uuids::uuid>(uuid);
-    j.at("index").get_to(sc.index);
-    j.at("total_count").get_to(sc.totalCount);
-    j.at("payload").get_to(sc.payload);
-    j.at("payload_size").get_to(sc.payloadSize);
+    cd.uuid = boost::lexical_cast<boost::uuids::uuid>(uuid);
+    j.at("index").get_to(cd.index);
+    j.at("total_count").get_to(cd.totalCount);
+    j.at("payload").get_to(cd.payload);
+    j.at("payload_size").get_to(cd.payloadSize);
+    j.at("checksum").get_to(cd.checksum);
 }
 
 void from_json(const json& j, SaveCommand& sc)

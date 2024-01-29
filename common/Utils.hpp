@@ -2,6 +2,7 @@
 #include <string>
 #include <memory>
 #include <type_traits>
+#include <base64pp/base64pp.h>
 
 class Utils
 {
@@ -29,6 +30,9 @@ public:
                                            std::shared_ptr<T> const ptr,
                                            std::string& buffer, 
                                            const std::string& fileName = "");
+
+    template<class T, typename std::enable_if<std::is_member_function_pointer<decltype(&T::computeChecksum)>::value, int>::type = 0>
+    static bool checkCRCcorrectness(const std::string& payload, std::shared_ptr<T> const ptr, uint32_t checksum);
 
     static std::string errorCodeToStr(int errCode);
 
@@ -91,4 +95,12 @@ void Utils::searchCompleteMessage(const std::string &data,
         // Process the complete message
         ptr->processData(completeMessage, fileName, index, total);
     }
+}
+
+template<class T, typename std::enable_if<std::is_member_function_pointer<decltype(&T::computeChecksum)>::value, int>::type>
+bool Utils::checkCRCcorrectness(const std::string& payload, std::shared_ptr<T> const ptr, uint32_t checksum)
+{
+    std::vector<uint8_t> binaryData = base64pp::decode(payload).value_or(std::vector<uint8_t>());
+    uint32_t crc32 = ptr->computeChecksum(reinterpret_cast<char*>(&binaryData[0]),binaryData.size());
+    return (crc32 == checksum);
 }

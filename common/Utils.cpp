@@ -31,6 +31,11 @@ std::string Utils::errorCodeToStr(int errCode)
             strErr = "Error opening file";
             break;
         }
+        case (int)ErrCode::ErrWrongCRC:
+        {
+            strErr = "Error wrong crc";
+            break;
+        }
         default:
         {
             strErr = "Generic Error";

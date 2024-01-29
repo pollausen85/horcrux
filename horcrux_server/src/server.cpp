@@ -3,6 +3,7 @@
 #include "Utils.hpp"
 #include "commands.hpp"
 #include "Defs.hpp"
+#include "CRC32.hpp"
 
 void server::doAccept(const std::string& directory) 
 {
@@ -15,7 +16,7 @@ void server::doAccept(const std::string& directory)
                 << ":" << socket.remote_endpoint().port() << '\n';
 
             
-            std::make_shared<session>(std::move(socket), m_storer)->run();
+            std::make_shared<session>(std::move(socket), m_storer, std::make_shared<CRC32>())->run();
         } 
         else 
         {
@@ -122,12 +123,22 @@ void session::executeSave(const SaveCommand &sc)
     lr.code = 0;
     lr.data = sc.data;
 
-    if(!m_storer->save(sc.data.uuid, json(lr).dump(), sc.data.index))
+    json resp;
+    if(Utils::checkCRCcorrectness(sc.data.payload, 
+                                   std::shared_ptr<IChecksum>(m_checksumCalculator->shared_from_this()), 
+                                   sc.data.checksum))
+    {        
+        if(!m_storer->save(sc.data.uuid, json(lr).dump(), sc.data.index))
+        {
+            sd.code = (int)ErrCode::ErrSavingFile;
+        }
+    }
+    else
     {
-        sd.code = (int)ErrCode::ErrSavingFile;
+        sd.code = (int)ErrCode::ErrWrongCRC;
     }
 
-    const json resp = sd;  
+    resp = json(sd);
 
     modifyAndWriteJsonBuffer(resp.dump());
 }

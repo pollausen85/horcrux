@@ -14,7 +14,8 @@ public:
     /// @brief client constructor
     /// @param io_context core I/O functionality for users of the asynchronous I/O objects
     /// @param chuncker   interface to class containg logic for splitting file
-    Client(boost::asio::io_context& io_context, std::shared_ptr<ISPlitter<T>> const chuncker);
+    Client(boost::asio::io_context& io_context, 
+           std::shared_ptr<ISPlitter<T>> const chunker);
 
     /// @brief connect to server
     /// @param serverAddress server address
@@ -44,7 +45,7 @@ private:
 
     tcp::socket m_socket;
     tcp::resolver m_resolver;
-    std::shared_ptr<ISPlitter<T>> m_chuncker;
+    std::shared_ptr<ISPlitter<T>> m_chunker;
     boost::asio::streambuf m_buffer;
     std::string m_strBuf;
 

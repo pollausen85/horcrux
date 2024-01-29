@@ -4,6 +4,7 @@
 #include <string>
 #include <cstring>
 #include "ChunkCreator.hpp"
+#include "CRC32.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -32,15 +33,15 @@ int main(int argc, char* argv[])
     }
 
     boost::asio::io_context io_context;
-    std::shared_ptr<ChunkCreator> pChuncker(std::make_shared<ChunkCreator>());
+    std::shared_ptr<IChecksum> pCRCcalculator(std::make_shared<CRC32>());
+    std::shared_ptr<ChunkCreator> pChuncker(std::make_shared<ChunkCreator>(pCRCcalculator));
     auto cl = std::make_shared<Client<Chunk>>(io_context, pChuncker);
     
     if(!cl->connect())
     {
         return -1;
     }
-    // std::string data{"some client data ..."};
-    // auto result = boost::asio::write(socket, boost::asio::buffer(data));
+    
     if(std::strcmp(argv[1],"save") == 0)
     {
         try 

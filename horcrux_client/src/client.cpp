@@ -8,10 +8,11 @@
 #include "Defs.hpp"
 
 template<class T>
-Client<T>::Client(boost::asio::io_context& io_context, std::shared_ptr<ISPlitter<T>> const chunker)
+Client<T>::Client(boost::asio::io_context& io_context, 
+                  std::shared_ptr<ISPlitter<T>> const chunker)
     :m_socket(io_context)
     ,m_resolver(io_context)
-    ,m_chuncker(chunker)
+    ,m_chunker(chunker)
 {
 }
 
@@ -41,7 +42,7 @@ template<class T>
 bool Client<T>::sendSaveCommand(const uint32_t chunkCount, const std::string& fileName, std::string& strUUID)
 {
     std::vector<Chunk> chunks; 
-    bool res = m_chuncker->split(chunkCount, fileName, chunks);
+    bool res = m_chunker->split(chunkCount, fileName, chunks);
     if(!res)
     {
         return false;
@@ -57,6 +58,7 @@ bool Client<T>::sendSaveCommand(const uint32_t chunkCount, const std::string& fi
         sc.data.index = i;
         sc.data.payload = chunks[i].payload;
         sc.data.payloadSize = chunks[i].payloadSize;
+        sc.data.checksum = chunks[i].checksum;
 
         j = json(sc);
 
@@ -125,15 +127,24 @@ void Client<T>::processData(const std::string& data, const std::string& filename
         auto lr = j.get<LoadResponse>();
         if(lr.code == (int)ErrCode::NoError)
         {
-            index = lr.data.index;
-            total = lr.data.totalCount;
+            if(Utils::checkCRCcorrectness(lr.data.payload, 
+                                          std::shared_ptr<IChecksum>(std::dynamic_pointer_cast<ChunkCreator>(m_chunker)->getChecksumCreator()->shared_from_this()), 
+                                          lr.data.checksum))
+            {      
+                index = lr.data.index;
+                total = lr.data.totalCount;
 
-            std::ofstream file(filename, std::ios::binary | std::ios::app);
-            if(file.is_open() && file.good())
+                std::ofstream file(filename, std::ios::binary | std::ios::app);
+                if(file.is_open() && file.good())
+                {
+                    std::vector<uint8_t> binaryData = base64pp::decode(lr.data.payload).value_or(std::vector<uint8_t>());
+                    file.write(reinterpret_cast<char*>(binaryData.data()), binaryData.size());
+                    file.close();
+                }
+            }
+            else
             {
-                std::vector<uint8_t> binaryData = base64pp::decode(lr.data.payload).value_or(std::vector<uint8_t>());
-                file.write(reinterpret_cast<char*>(binaryData.data()), binaryData.size());
-                file.close();
+                std::cerr << "Error " << lr.code << ": " << Utils::errorCodeToStr(lr.code) << std::endl;    
             }
         }
         else
@@ -174,7 +185,8 @@ void Client<T>::waitForRequestOrResponse(const std::string& filename)
     }
 }
 
-template Client<Chunk>::Client(boost::asio::io_context& io_context, std::shared_ptr<ISPlitter<Chunk>> const chunker);
+template Client<Chunk>::Client(boost::asio::io_context& io_context, 
+                               std::shared_ptr<ISPlitter<Chunk>> const chunker);
 template bool Client<Chunk>::connect(const std::string& serverAddress, const std::string& serverPort);
 template void Client<Chunk>::disconnect();
 template bool Client<Chunk>::sendSaveCommand(const uint32_t chunkCount, const std::string& fileName, std::string& strUUID);

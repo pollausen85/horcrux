@@ -4,6 +4,7 @@
 
 enum class ErrCode
 {
+    ErrWrongCRC     = -5,
     ErrOpeningFile  = -4,
     ErrReadingFile  = -3,
     ErrFileNotFound = -2,

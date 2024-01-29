@@ -3,9 +3,9 @@
 #include <iostream>
 #include <boost/asio.hpp>
 #include <mutex>
-#include <condition_variable>
 #include <memory>
 #include "DiskStorer.hpp"
+#include "IChecksum.hpp"
 
 class SaveCommand;
 
@@ -16,9 +16,11 @@ class session : public std::enable_shared_from_this<session>
 
 public:
 
-    session(tcp::socket socket, std::shared_ptr<IStorer> const storer)  
+    session(tcp::socket socket, std::shared_ptr<IStorer> const storer,
+            std::shared_ptr<IChecksum> const checksumCalculator)  
         : m_socket(std::move(socket))
-        , m_storer(storer) { }
+        , m_storer(storer) 
+        , m_checksumCalculator(checksumCalculator) { }
 
     /// @brief Start a new session
     void run() 
@@ -57,7 +59,12 @@ private:
     /// @param data data to write in the buffer
     void modifyAndWriteJsonBuffer(const std::string& data);
 
+    /// @brief Modify and write to the socket using async_write the m_fileContent
+    /// @param file opened and read file where data are stored
+    /// @param size file size in bytes
     void modifyAndWriteFileContent(std::ifstream& file, const std::streamsize& size);
+
+    bool checkCRCcorrectness(const std::string& payload, uint32_t checksum);
 
     tcp::socket m_socket;
     boost::asio::streambuf m_buffer;
@@ -65,6 +72,7 @@ private:
     std::string m_strBuf;
     std::string m_jsonBuf;
     std::shared_ptr<IStorer> const m_storer;
+    std::shared_ptr<IChecksum> const m_checksumCalculator;
     std::vector<char> m_fileContent;
     std::mutex m_fileContentMutex;
 };

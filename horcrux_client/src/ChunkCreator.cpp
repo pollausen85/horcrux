@@ -32,6 +32,8 @@ bool ChunkCreator::split(const uint32_t chunksCount, const std::string& fileName
             chunk.resize(actuallyCount);
         }
         chunks[i].payloadSize = actuallyCount;
+        chunks[i].checksum = m_checksumCreator->computeChecksum(reinterpret_cast<char*>(&chunk[0]), 
+                                                                chunk.size());
         chunks[i].payload = base64pp::encode(chunk);
     }
 
