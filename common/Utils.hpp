@@ -57,8 +57,8 @@ void Utils::waitForCompleteMessage(const std::string &data,
     searchCompleteMessage(data, ptr, buffer, index, total, fileName);
 }
 
-template<class T, typename std::enable_if<std::is_member_function_pointer<decltype(&T::processData)>::value, int>::type = 0,
-         typename std::enable_if<std::is_member_function_pointer<decltype(&T::waitForRequestOrResponse)>::value, int>::type = 0>
+template<class T, typename std::enable_if<std::is_member_function_pointer<decltype(&T::processData)>::value, int>::type,
+         typename std::enable_if<std::is_member_function_pointer<decltype(&T::waitForRequestOrResponse)>::value, int>::type>
 void Utils::waitForCompleteLoadMessage(const std::string& data,
                                        std::shared_ptr<T> const ptr,
                                        std::string& buffer, 
